@@ -6,6 +6,7 @@ class Tag < ApplicationRecord
 
   validate :format_name
 
+  # ToDo: Use Regex in validation format
   def format_name
     if name.match?(/\s/) || name.include?("+") || name.include?("-")
       errors.add(:name, "please enter tags in correct format, without -, + or whitespaces")

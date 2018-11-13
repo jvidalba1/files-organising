@@ -5,6 +5,14 @@ class Document < ApplicationRecord
 
   before_validation :generate_uuid
 
+  scope :by_tags, -> (search, offset) {
+    # ToDO: Implement offset
+    tags = self.map_tags(search)
+    files_in = Document.joins(:tags).where("tags.name IN (?)", tags.first)
+    files_out = Document.joins(:tags).where("tags.name IN (?)", tags.second)
+    (files_in - files_out)
+  }
+
   def generate_uuid
     self.uuid = SecureRandom.uuid
   end
@@ -17,5 +25,32 @@ class Document < ApplicationRecord
         self.tags << record_tag
       end
     end
+  end
+
+  def records
+    {
+      uuid: uuid,
+      name: name
+    }
+  end
+
+  def related_tags
+    res = []
+    res << tags.map { |tag| { name: tag.name, counter: tag.documents.count } }
+  end
+
+  def self.map_tags(search)
+    tags = search.split(' ')
+    tags_in = []
+    tags_out = []
+
+    tags.each do |tag|
+      if tag.chars.first == '+'
+        tags_in << tag[1..-1]
+      else
+        tags_out << tag[1..-1]
+      end
+    end
+    [tags_in, tags_out]
   end
 end
