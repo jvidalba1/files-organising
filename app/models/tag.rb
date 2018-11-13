@@ -4,7 +4,11 @@ class Tag < ApplicationRecord
   validates :name, presence: true
   validates :name, uniqueness: { case_sensitive: false }
 
-  def name
-    self.name.downcase
+  validate :format_name
+
+  def format_name
+    if name.match?(/\s/) || name.include?("+") || name.include?("-")
+      errors.add(:name, "please enter tags in correct format, without -, + or whitespaces")
+    end
   end
 end
