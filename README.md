@@ -1,24 +1,26 @@
 # README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Setting up
 
-Things you may want to cover:
+- Clone repo with `git clone git@github.com:jvidalba1/files-organising.git`
 
-* Ruby version
+- Go to folder `file-organising`
 
-* System dependencies
+- Run `bundle install` to install all gems/libraries
 
-* Configuration
+- Run `rake db:create` to set all databases
 
-* Database creation
+- Run `rake db:migrate` to run database migrations
 
-* Database initialization
+- Run `rails server` to start the server.
 
-* How to run the test suite
 
-* Services (job queues, cache servers, search engines, etc.)
+## Endpoints
 
-* Deployment instructions
+> POST `/file`, params: { name: <string>, tags: <array of tags> }
 
-* ...
+![](https://image.ibb.co/n24aQL/Screen-Shot-2018-11-13-at-3-45-58-PM.png)
+
+> GET `/files/:tag_search_query/:page`, params: { tag_search_query: <string>, page: <string> }
+
+![](https://image.ibb.co/fOeH5L/Screen-Shot-2018-11-13-at-3-49-38-PM.png)
