@@ -15,12 +15,12 @@ class DocumentsController < ApplicationController
     search = params[:tag_search_query]
     page = params[:page]
 
-    documents = Document.by_tags(search, page.to_i)
+    response = Document.response(search, page.to_i)
 
     render json: {
-      total_records: documents.count,
-      related_tags: documents.map { |doc| doc.related_tags }.flatten.uniq,
-      records: documents.map {|d| d.records }
+      total_records: response[:documents].count,
+      related_tags: response[:related_tags].map {|tag| { name: tag.name } },
+      records: response[:documents].map {|d| {name: d.name, uuid: d.uuid}}
     }
   end
 

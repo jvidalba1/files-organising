@@ -5,13 +5,22 @@ class Document < ApplicationRecord
 
   before_validation :generate_uuid
 
-  scope :by_tags, -> (search, offset) {
-    # ToDO: Implement offset
+  def self.response(search, offset)
     tags = self.map_tags(search)
-    files_in = Document.joins(:tags).where("tags.name IN (?)", tags.first).distinct
-    files_out = Document.joins(:tags).where("tags.name IN (?)", tags.second).distinct
-    (files_in - files_out)
-  }
+
+    tags_in = self.get_tags(tags.first)
+    tags_out = self.get_tags(tags.second)
+
+    files_in = self.get_documents(tags_in)
+    files_out = self.get_documents(tags_out)
+
+    # files_out = Document.joins(:tags).where("tags.name IN (?)", tags.second).distinct
+
+    files = self.diff_set(files_in, files_out)
+    related_tags = self.related_tags(files, tags_in)
+
+    { documents: files, related_tags: related_tags }
+  end
 
   def generate_uuid
     self.uuid = SecureRandom.uuid
@@ -27,30 +36,48 @@ class Document < ApplicationRecord
     end
   end
 
-  def records
-    {
-      uuid: uuid,
-      name: name
-    }
-  end
+  private
 
-  def related_tags
-    res = []
-    res << tags.map { |tag| { name: tag.name, counter: tag.documents.count } }
-  end
-
-  def self.map_tags(search)
-    tags = search.split(' ')
-    tags_in = []
-    tags_out = []
-
-    tags.each do |tag|
-      if tag.chars.first == '+'
-        tags_in << tag[1..-1]
-      else
-        tags_out << tag[1..-1]
-      end
+    def self.related_tags(files, tags_in)
+      all_tags = files.map { |file| file.tags }.flatten.uniq
+      self.diff_set(all_tags, tags_in)
     end
-    [tags_in, tags_out]
-  end
+
+    def self.get_documents(tags)
+      where("id in (?)", self.query_execution(self.aggregation_query(tags)))
+    end
+
+    def self.aggregation_query(tags)
+      "select document_id
+      from documents_tags
+      group by document_id
+      having array_agg(tag_id::integer) @> array#{tags.map(&:id)};"
+    end
+
+    def self.query_execution(query)
+      ActiveRecord::Base.connection.execute(query).values.flatten
+    end
+
+    def self.get_tags(tags)
+      Tag.where("name IN (?)", tags)
+    end
+
+    def self.diff_set(_in, _out)
+      (_in - _out)
+    end
+
+    def self.map_tags(search)
+      tags = search.split(' ')
+      tags_in = []
+      tags_out = []
+
+      tags.each do |tag|
+        if tag.chars.first == '+'
+          tags_in << tag[1..-1]
+        else
+          tags_out << tag[1..-1]
+        end
+      end
+      [tags_in, tags_out]
+    end
 end
