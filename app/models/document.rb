@@ -8,8 +8,8 @@ class Document < ApplicationRecord
   scope :by_tags, -> (search, offset) {
     # ToDO: Implement offset
     tags = self.map_tags(search)
-    files_in = Document.joins(:tags).where("tags.name IN (?)", tags.first)
-    files_out = Document.joins(:tags).where("tags.name IN (?)", tags.second)
+    files_in = Document.joins(:tags).where("tags.name IN (?)", tags.first).distinct
+    files_out = Document.joins(:tags).where("tags.name IN (?)", tags.second).distinct
     (files_in - files_out)
   }
 
